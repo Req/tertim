@@ -31,28 +31,52 @@ if (target.includes("m")) {
 
 let terminalWidth = process.stdout.columns
 let terminalHeight = process.stdout.rows
+let newlines = Math.floor(terminalHeight / 2)
 
 // Detect when the terminal is resized
 process.stdout.on("resize", () => {
     terminalWidth = process.stdout.columns
     terminalHeight = process.stdout.rows
+    newlines = Math.floor(terminalHeight / 2)
 })
+
+let prevPrint = ""
 
 setInterval(() => {
     const currentTime = new Date()
-    // Clear console
-    console.clear()
-
     const timeLeft = targetTime - currentTime
-    const msg = Math.round(timeLeft / 1000) > 0 ? `${Math.round(timeLeft / 1000)}` : "0"
-
-    const spacesBeforeMsg = Math.floor(terminalWidth / 2 - msg.length / 2)
-    const spacesAfterMsg = terminalWidth - spacesBeforeMsg - msg.length
-    const newlines = Math.floor(terminalHeight / 2)
-    console.log(`${"\n".repeat(newlines)}${" ".repeat(spacesBeforeMsg)}${msg}${" ".repeat(spacesAfterMsg)}\n`)
 
     // check if the target time has been reached
     if (timeLeft <= 0) {
         process.exit()
     }
-}, 91000)
+
+    const msg = formatOutput(timeLeft)
+    const spacesBeforeMsg = Math.floor(terminalWidth / 2 - msg.length / 2)
+    const print = `${"\n".repeat(newlines)}${" ".repeat(spacesBeforeMsg)}${msg}`
+
+    if (print === prevPrint) {
+        return
+    }
+    console.clear()
+    console.log(print)
+    prevPrint = print
+}, 100)
+
+function formatOutput(timeLeft) {
+    const totalSeconds = Math.floor(timeLeft / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+        return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+    }
+
+    if (minutes > 0) {
+        return `${minutes}:${seconds.toString().padStart(2, "0")}`
+    }
+
+    return `${seconds}`
+}
+
