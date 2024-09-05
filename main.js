@@ -1,13 +1,17 @@
+#!/usr/bin/env node
 const target = process.argv[2]
+const txt = process.argv[3]
 
-// possible values for target are: "10m", "10s", "17:00"
-
-if (target === "--help") {
-    console.log("Usage: tertim [TARGET]")
+if (target === "--help" || target === "-h") {
+    console.log("Usage: tertim [TARGET] [TEXT]")
     console.log("Possible values for target must be provided in:")
-    console.log(" * minutes: 'tertim 10m'");
-    console.log(" * seconds: 'tertim 55s'");
-    console.log(" * target time: 'tertim 17:00'");
+    console.log(" $ tertim 10m    # Set a countdown for 10 minutes");
+    console.log(" $ tertim 55s    # Set a countdown for 55 seconds");
+    console.log(" $ tertim 17:00  # Set a countdown for 17:00");
+    console.log("");
+    console.log("TEXT is an optional message that will be displayed below the countdown.");
+    console.log("  $ tertim 10m 'Take a break!' ");
+    console.log('  $ tertim 17:00 "Workday timer"');
     process.exit(0)
 }
 
@@ -29,6 +33,10 @@ if (target.includes("m")) {
     process.exit(-1)
 }
 
+if (targetTime < new Date()) {
+    targetTime.setDate(targetTime.getDate() + 1)
+}
+
 let terminalWidth = process.stdout.columns
 let terminalHeight = process.stdout.rows
 let newlines = Math.floor(terminalHeight / 2)
@@ -48,12 +56,17 @@ setInterval(() => {
 
     // check if the target time has been reached
     if (timeLeft <= 0) {
-        process.exit()
+        process.exit(0)
     }
 
     const msg = formatOutput(timeLeft)
     const spacesBeforeMsg = Math.floor(terminalWidth / 2 - msg.length / 2)
-    const print = `${"\n".repeat(newlines)}${" ".repeat(spacesBeforeMsg)}${msg}`
+    let print = `${"\n".repeat(newlines)}${" ".repeat(spacesBeforeMsg)}${msg}`
+
+    if (txt !== undefined) {
+        let txtSpaces = Math.floor(terminalWidth / 2 - txt.length / 2)
+        print += `\n\n${" ".repeat(txtSpaces)}${txt}`
+    }
 
     if (print === prevPrint) {
         return
