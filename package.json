@@ -1,0 +1,12 @@
+{
+  "name": "tertim",
+  "version": "1.0.0",
+  "description": "Tertim is a simple terminal timer that essentially clones `termdown` in JavaScript.",
+  "author": "Joel Peltonen <joel.peltonen@gmail.com>",
+  "main": "main.js",
+  "bin": {
+    "tertim": "main.sh"
+  },
+  "keywords": ["terminal", "timer", "countdown"],
+  "license": "MIT"
+}
