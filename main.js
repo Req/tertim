@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import parseTargetTime from "./parseTargetTime"
+
 const target = process.argv[2]
 const txt = process.argv[3]
 
@@ -11,31 +13,11 @@ if (target === "--help" || target === "-h") {
     console.log("");
     console.log("TEXT is an optional message that will be displayed below the countdown.");
     console.log("  $ tertim 10m 'Take a break!' ");
-    console.log('  $ tertim 17:00 "Workday timer"');
+    console.log("  $ tertim 17:00 'Workday timer'");
     process.exit(0)
 }
 
-// parse target time from the target string
-let targetTime = new Date()
-if (target.includes("m")) {
-    const minutes = parseInt(target)
-    targetTime.setMinutes(targetTime.getMinutes() + minutes)
-} else if (target.includes("s")) {
-    const seconds = parseInt(target)
-    targetTime.setSeconds(targetTime.getSeconds() + seconds)
-} else if (target.includes(":")) {
-    const [hours, minutes] = target.split(":")
-    targetTime.setHours(parseInt(hours))
-    targetTime.setMinutes(parseInt(minutes))
-} else {
-    console.error("Invalid target time")
-    console.error("Try 'tertim --help' for more information.")
-    process.exit(-1)
-}
-
-if (targetTime < new Date()) {
-    targetTime.setDate(targetTime.getDate() + 1)
-}
+let targetTime = parseTargetTime(target)
 
 let terminalWidth = process.stdout.columns
 let terminalHeight = process.stdout.rows
