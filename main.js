@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import parseTargetTime from "./parseTargetTime"
+import parseTargetTime from "./parseTargetTime.js"
+import formatOutput from "./formatOutput.js"
 
 const target = process.argv[2]
 const txt = process.argv[3]
@@ -11,39 +12,62 @@ if (target === "--help" || target === "-h") {
     console.log(" $ tertim 55s    # Set a countdown for 55 seconds");
     console.log(" $ tertim 17:00  # Set a countdown for 17:00");
     console.log("");
+    console.log("If no target is provided, the timer will count up from the current time.");
+    console.log("");
     console.log("TEXT is an optional message that will be displayed below the countdown.");
     console.log("  $ tertim 10m 'Take a break!' ");
     console.log("  $ tertim 17:00 'Workday timer'");
     process.exit(0)
 }
 
-let targetTime = parseTargetTime(target)
-
+let targetTime = target ? parseTargetTime(target) : -1
 let terminalWidth = process.stdout.columns
 let terminalHeight = process.stdout.rows
 let newlines = Math.floor(terminalHeight / 2)
-
-// Detect when the terminal is resized
-process.stdout.on("resize", () => {
-    terminalWidth = process.stdout.columns
-    terminalHeight = process.stdout.rows
-    newlines = Math.floor(terminalHeight / 2)
-})
-
+let intervalId = 0
 let prevPrint = ""
 
-setInterval(() => {
-    const currentTime = new Date()
-    const timeLeft = targetTime - currentTime
+function startCountUp() {
+    let secondsSinceStart = 0
 
-    // check if the target time has been reached
-    if (timeLeft <= 0) {
-        process.exit(0)
-    }
+    intervalId = setInterval(() => {
+        secondsSinceStart += 1000
 
-    const msg = formatOutput(timeLeft)
-    const spacesBeforeMsg = Math.floor(terminalWidth / 2 - msg.length / 2)
-    let print = `${"\n".repeat(newlines)}${" ".repeat(spacesBeforeMsg)}${msg}`
+        const msg = formatOutput(secondsSinceStart)
+        printMsg(msg)
+    }, 1000)
+}
+
+function startCountdown() {
+    let timeLeft = targetTime - new Date()
+
+    intervalId = setInterval(() => {
+        const currentTime = new Date()
+        timeLeft = targetTime - currentTime
+
+        // check if the target time has been reached
+        if (timeLeft <= 0) {
+            console.clear()
+            process.exit(0)
+        }
+
+        const msg = formatOutput(timeLeft)
+        printMsg(msg)
+    }, 100)
+}
+
+function printMsg(msg) {
+    const spacesBeforeMsg = 0//Math.floor(terminalWidth / 2 - msg.length / 2)
+
+    const msglines = msg.split("\n")
+    msglines.forEach((line, i) => {
+        msglines[i] = `${" ".repeat(spacesBeforeMsg)}${line}`
+    })
+
+    let print = "\n".repeat(newlines) + msglines.map(line => {
+        let txtSpaces = Math.floor(terminalWidth / 2 - line.length / 2)
+        return " ".repeat(txtSpaces) + line + "\n"
+    }).join("")
 
     if (txt !== undefined) {
         let txtSpaces = Math.floor(terminalWidth / 2 - txt.length / 2)
@@ -53,25 +77,29 @@ setInterval(() => {
     if (print === prevPrint) {
         return
     }
-    console.clear()
+
+    // console.clear() // A neater method would be to clear only the lines that have changed... or just redraw the previous print
     console.log(print)
     prevPrint = print
-}, 100)
-
-function formatOutput(timeLeft) {
-    const totalSeconds = Math.floor(timeLeft / 1000);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    if (hours > 0) {
-        return `${hours}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
-    }
-
-    if (minutes > 0) {
-        return `${minutes}:${seconds.toString().padStart(2, "0")}`
-    }
-
-    return `${seconds}`
 }
 
+if (targetTime === -1) {
+    startCountUp()
+} else {
+    startCountdown()
+}
+
+// Detect when the terminal is resized
+process.stdout.on("resize", () => {
+    terminalWidth = process.stdout.columns
+    terminalHeight = process.stdout.rows
+    newlines = Math.floor(terminalHeight / 2)
+
+
+    clearInterval(intervalId)
+    if (targetTime === -1) {
+        startCountUp()
+    } else {
+        startCountdown()
+    }
+})

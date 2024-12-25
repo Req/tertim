@@ -23,3 +23,5 @@ function parseTargetTime(target) {
 
     return targetTime
 }
+
+export default parseTargetTime
