@@ -33,7 +33,7 @@ function startCountUp() {
     intervalId = setInterval(() => {
         secondsSinceStart += 1000
 
-        const msg = formatOutput(secondsSinceStart)
+        const msg = formatOutput(secondsSinceStart, terminalWidth, terminalHeight)
         printMsg(msg)
     }, 1000)
 }
@@ -51,13 +51,13 @@ function startCountdown() {
             process.exit(0)
         }
 
-        const msg = formatOutput(timeLeft)
+        const msg = formatOutput(timeLeft, terminalWidth, terminalHeight)
         printMsg(msg)
     }, 100)
 }
 
 function printMsg(msg) {
-    const spacesBeforeMsg = 0//Math.floor(terminalWidth / 2 - msg.length / 2)
+    const spacesBeforeMsg = 0//Math.round(terminalWidth / 2 - msg.length / 2)
 
     const msglines = msg.split("\n")
     msglines.forEach((line, i) => {
@@ -65,12 +65,15 @@ function printMsg(msg) {
     })
 
     let print = "\n".repeat(newlines) + msglines.map(line => {
-        let txtSpaces = Math.floor(terminalWidth / 2 - line.length / 2)
+        if (line.length > terminalWidth) {
+            return line.slice(0, terminalWidth)
+        }
+        let txtSpaces = Math.round(terminalWidth / 2 - line.length / 2)
         return " ".repeat(txtSpaces) + line + "\n"
     }).join("")
 
     if (txt !== undefined) {
-        let txtSpaces = Math.floor(terminalWidth / 2 - txt.length / 2)
+        let txtSpaces = Math.round(terminalWidth / 2 - txt.length / 2)
         print += `\n\n${" ".repeat(txtSpaces)}${txt}`
     }
 
@@ -78,7 +81,7 @@ function printMsg(msg) {
         return
     }
 
-    // console.clear() // A neater method would be to clear only the lines that have changed... or just redraw the previous print
+    console.clear() // A neater method would be to clear only the lines that have changed... or just redraw the previous print
     console.log(print)
     prevPrint = print
 }
@@ -94,7 +97,6 @@ process.stdout.on("resize", () => {
     terminalWidth = process.stdout.columns
     terminalHeight = process.stdout.rows
     newlines = Math.floor(terminalHeight / 2)
-
 
     clearInterval(intervalId)
     if (targetTime === -1) {

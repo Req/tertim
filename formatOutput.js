@@ -1,6 +1,6 @@
 import chars_5 from "./ascii.js";
 
-function formatOutput(timeLeft) {
+function formatOutput(timeLeft, terminalWidth, terminalHeight) {
     const totalSeconds = Math.floor(timeLeft / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
@@ -16,18 +16,28 @@ function formatOutput(timeLeft) {
         txt = `${seconds}`
     }
 
-    let converted = ["", "", "", "", ""];
-    for (let i = 0; i < txt.length; i++) {
-        const char = txt[i];
-        const charIndex = char === ":" ? 10 : parseInt(char);
-        const asciiChar = chars_5[charIndex];
-        const asciiLines = asciiChar.split("\n");
-        for (let j = 0; j < 5; j++) {
-            converted[j] += asciiLines[j] + " ";
-        }
-    }
+    // For now, only 1 or 5 height ascii output is supported
+    if (terminalHeight > 7) {
+        let converted = ["", "", "", "", ""];
 
-    return converted.join("\n");
+        for (let i = 0; i < txt.length; i++) {
+            const char = txt[i];
+            const charIndex = char === ":" ? 10 : parseInt(char);
+
+            const asciiChar = chars_5[charIndex];
+            const asciiLines = asciiChar.split("\n");
+            for (let j = 0; j < 5; j++) {
+                converted[j] += asciiLines[j] + " ";
+            }
+        }
+
+        if (converted[0].length > terminalWidth) {
+            return txt;
+        }
+
+        return converted.join("\n");
+    }
+    return txt;
 }
 
 export default formatOutput
